@@ -1,43 +1,103 @@
-import Phaser from "phaser";
+import BaseScene from "./BaseScene";
 
 const PIPES_TO_RENDER = 4;
 
-class PlayScene extends Phaser.Scene {
+class PlayScene extends BaseScene {
 	constructor(config) {
-		super("PlayScene");
-		this.config = config;
+		super("PlayScene", config);
 
 		this.bird = null;
 		this.pipes = null;
+		this.isPaused = false;
 
 		this.pipeHorizontalDistance = 0;
-		this.pipeVerticalDistanceRange = [150, 250];
-		this.pipeHorizontalDistanceRange = [500, 550];
-		this.flapVelocity = 350;
+		this.flapVelocity = 300;
 
 		this.score = 0;
 		this.scoreText = "";
+
+		this.currentDifficulty = "easy";
+		this.difficulties = {
+			easy: {
+				pipeHorizontalDistanceRange: [300, 350],
+				pipeVerticalDistanceRange: [150, 200],
+			},
+			normal: {
+				pipeHorizontalDistanceRange: [280, 330],
+				pipeVerticalDistanceRange: [140, 190],
+			},
+			hard: {
+				pipeHorizontalDistanceRange: [250, 310],
+				pipeVerticalDistanceRange: [50, 100],
+			},
+		};
 	}
 
 	create() {
-		this.createBG();
+		this.currentDifficulty = "easy";
+		super.create();
 		this.createBird();
 		this.createPipes();
 		this.createColliders();
 		this.createScore();
 		this.createPause();
 		this.handleInputs();
+		this.listenToEvents();
+
+		this.anims.create({
+			key: "fly",
+			frames: this.anims.generateFrameNumbers("bird", {
+				start: 9,
+				end: 15,
+			}),
+			// 24 fps default, it will play animation consisting of 24 frames in 1 second
+			// in case of framerate 2 and sprite of 8 frames animations will play in
+			// 4 sec; 8 / 2 = 4
+			frameRate: 8,
+			// repeat infinitely
+			repeat: -1,
+		});
+
+		this.bird.play("fly");
 	}
 
-	/*
-        If bird position x is same or larger than width of canvas go back to the left
-        If bird position x is smaller or equal to 0 then move back to the right
-        If bird y position is small than 0 or greater than height of the canvas
-        then alert "You have Lost"
-    */
 	update() {
 		this.checkGameStatus();
 		this.recyclePipes();
+	}
+
+	listenToEvents() {
+		if (this.pauseEvent) {
+			return;
+		}
+
+		this.pauseEvent = this.events.on("resume", () => {
+			this.initialTime = 3;
+			this.countDownText = this.add
+				.text(
+					...this.screenCenter,
+					"Fly in: " + this.initialTime,
+					this.fontOptions
+				)
+				.setOrigin(0.5);
+			this.timedEvent = this.time.addEvent({
+				delay: 1000,
+				callback: this.countDown,
+				callbackScope: this,
+				loop: true,
+			});
+		});
+	}
+
+	countDown() {
+		this.initialTime--;
+		this.countDownText.setText("Fly in: " + this.initialTime);
+		if (this.initialTime <= 0) {
+			this.isPaused = false;
+			this.countDownText.setText("");
+			this.physics.resume();
+			this.timedEvent.remove();
+		}
 	}
 
 	createBG() {
@@ -51,8 +111,12 @@ class PlayScene extends Phaser.Scene {
 				this.config.startPosition.y,
 				"bird"
 			)
+			.setFlipX(true)
+			.setScale(3)
 			.setOrigin(0);
-		this.bird.body.gravity.y = 400;
+
+		this.bird.setBodySize(this.bird.width, this.bird.height - 8);
+		this.bird.body.gravity.y = 600;
 		this.bird.setCollideWorldBounds(true);
 	}
 
@@ -88,7 +152,7 @@ class PlayScene extends Phaser.Scene {
 	createScore() {
 		this.score = 0;
 		const bestScore = localStorage.getItem("bestScore");
-		this.scoreText = this.add.text(16, 16, `Score ${0}`, {
+		this.scoreText = this.add.text(16, 16, `Score: ${0}`, {
 			fontSize: "32px",
 			fill: "#000",
 		});
@@ -99,6 +163,7 @@ class PlayScene extends Phaser.Scene {
 	}
 
 	createPause() {
+		this.isPaused = false;
 		const pauseButton = this.add
 			.image(this.config.width - 10, this.config.height - 10, "pause")
 			.setInteractive()
@@ -106,8 +171,10 @@ class PlayScene extends Phaser.Scene {
 			.setOrigin(1);
 
 		pauseButton.on("pointerdown", () => {
+			this.isPaused = true;
 			this.physics.pause();
 			this.scene.pause();
+			this.scene.launch("PauseScene");
 		});
 	}
 
@@ -126,17 +193,17 @@ class PlayScene extends Phaser.Scene {
 	}
 
 	placePipe(uPipe, lPipe) {
+		const difficulty = this.difficulties[this.currentDifficulty];
 		const rightMostX = this.getRightMostPipe();
 		const pipeVerticalDistance = Phaser.Math.Between(
-			...this.pipeVerticalDistanceRange
+			...difficulty.pipeVerticalDistanceRange
 		);
-		// == pipeVerticalDistanceRange[0], pipeVerticalDistanceRange[1]
 		const pipeVerticalPosition = Phaser.Math.Between(
 			0 + 20,
 			this.config.height - 20 - pipeVerticalDistance
 		);
 		const pipeHorizontalDistance = Phaser.Math.Between(
-			...this.pipeHorizontalDistanceRange
+			...difficulty.pipeHorizontalDistanceRange
 		);
 
 		uPipe.x = rightMostX + pipeHorizontalDistance;
@@ -155,9 +222,20 @@ class PlayScene extends Phaser.Scene {
 					this.placePipe(...tempPipes);
 					this.increaseScore();
 					this.saveBestScore();
+					this.increaseDifficulty();
 				}
 			}
 		});
+	}
+
+	increaseDifficulty() {
+		if (this.score === 1) {
+			this.currentDifficulty = "normal";
+		}
+
+		if (this.score === 3) {
+			this.currentDifficulty = "hard";
+		}
 	}
 
 	getRightMostPipe() {
@@ -180,16 +258,13 @@ class PlayScene extends Phaser.Scene {
 	}
 
 	gameOver() {
-		// this.bird.x = this.config.startPosition.x;
-		// this.bird.y = this.config.startPosition.y;
-		// this.bird.body.velocity.y = 0;
 		this.physics.pause();
 		this.bird.setTint(0xee4824);
 
 		this.saveBestScore();
 
 		this.time.addEvent({
-			delay: 100,
+			delay: 1000,
 			callback: () => {
 				this.scene.restart();
 			},
@@ -198,6 +273,9 @@ class PlayScene extends Phaser.Scene {
 	}
 
 	flap() {
+		if (this.isPaused) {
+			return;
+		}
 		this.bird.body.velocity.y = -this.flapVelocity;
 	}
 
