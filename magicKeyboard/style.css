@@ -1,0 +1,83 @@
+body {
+	height: 100vh;
+	display: flex;
+	align-items: center;
+	padding: 0;
+	margin: 0;
+}
+
+.keyboard {
+	display: grid;
+	grid-template-columns: repeat(14, 1fr);
+	gap: 5px;
+	max-width: 783px;
+	margin: 0 auto;
+	padding: 10px;
+	grid-auto-rows: 50px;
+	transform-style: preserve-3d;
+	background-image: linear-gradient();
+	background-image: linear-gradient(135deg, #ced0d7, #ced0d7 60%, #bfc0c3);
+	border-radius: 15px;
+	box-shadow: 0 4 12px rgba(0, 0, 0, 0.4);
+}
+
+.key {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #f7f7f7;
+	border: none;
+	border-radius: 5px;
+	font-size: 16px;
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+		Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+		sans-serif;
+	cursor: pointer;
+	border: 1px solid #898b90;
+	transform-style: preserve-3d;
+	transition: background-color 0.2s;
+	text-transform: capitalize;
+	color: #9f9f9f;
+}
+
+.key.pressed {
+	background-color: #ff9999;
+}
+
+.key.tab {
+	grid-column: span 1;
+}
+
+.key.enter {
+	grid-column: span 2;
+}
+
+.key.shift {
+	grid-column: span 2;
+}
+
+.key.ctrl {
+	grid-column: span 1;
+}
+
+.key.win {
+	grid-column: span 1;
+}
+
+.key.alt {
+	grid-column: span 1;
+}
+
+.key.space {
+	grid-column: span 5;
+}
+
+.arrow_wrap {
+	display: flex;
+	flex-direction: column;
+	row-gap: 3px;
+}
+
+.arrow_wrap .key {
+	flex-grow: 1;
+}
