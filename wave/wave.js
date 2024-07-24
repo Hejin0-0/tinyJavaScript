@@ -20,7 +20,7 @@ export class Wave {
 		this.centerY = stageHeight / 2;
 
 		// Calculate the gap between points
-		// 포인트 사이의 간격을 계산
+		// 포인트 사이의 간격을 계산 ... `전체 넓이 / (전체 점의 숫자 - 1)`
 		this.pointGap = this.stageWidth / (this.totalPoints - 1);
 
 		// Initialize the points
@@ -34,7 +34,7 @@ export class Wave {
 		this.points = [];
 
 		// Create points at equal intervals
-		// 일정한 간격으로 포인트를 생성
+		// 일정한 간격으로 포인트를 생성 ... index를 넣어주는 이유는 각 점의 위치에 따라 파동이 움직이는 모양도 다르게 하기 위함
 		for (let i = 0; i < this.totalPoints; i++) {
 			const point = new Point(
 				this.index + i,

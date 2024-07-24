@@ -1,5 +1,10 @@
 export class Point {
 	constructor(index, x, y) {
+		/*
+	한번에 웨이브를 그려낸다기보다는 화면에 간격을 가진 점을 찍고 그 점 사이를 곡선으로 연결하는 방식이라고 이해하면 쉬움.
+	웨이브를 그리는데 이용되는 점들은 아래 위로 랜덤하게 offset 값을 가짐
+		*/
+
 		// Initialize the x and y coordinates
 		// x, y 좌표 초기화
 		this.x = x;
@@ -23,6 +28,11 @@ export class Point {
 	}
 
 	update() {
+		/*
+		speed 만큼 cur 값이 더해지면서
+		cur 값은 계속 커지지만, y값은 sin함수의 주기를 따르기 때문에 무한히 -1 ~ 1 사이를 반복함
+		*/
+
 		// Increase the current position index by the speed
 		// 현재 위치 인덱스를 속도만큼 증가
 		this.cur += this.speed;
